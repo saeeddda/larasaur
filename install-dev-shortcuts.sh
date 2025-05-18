@@ -6,7 +6,7 @@ RC_FILE="$HOME/.bashrc"
 [[ -n "$ZSH_VERSION" ]] && RC_FILE="$HOME/.zshrc"
 
 # Default project root
-DEFAULT_PROJECT_ROOT="$HOME/projects/dev-env"
+DEFAULT_PROJECT_ROOT="$HOME/projects"
 PROJECT_ROOT="${PROJECT_ROOT:-$DEFAULT_PROJECT_ROOT}"
 
 mkdir -p "$BIN_DIR"
