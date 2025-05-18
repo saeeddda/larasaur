@@ -1,5 +1,7 @@
 # Unified Docker Development Environment for Laravel Projects
 
+![Larasaur](art/cover/low-quality.png)
+
 A flexible, efficient Docker-based development environment that allows you to run multiple Laravel projects from different directories under a single environment setup.
 
 ## ✨ Key Benefits Compared to Laravel Sail, Longhorn, Herd
@@ -94,3 +96,21 @@ You can customize the environment by editing:
 - `docker-compose.yml` - Service configuration
 - `Dockerfile` - PHP extensions and dependencies
 - `nginx/templates/project.conf.tpl` - Nginx site template
+
+## 🎨 Branding & Assets
+
+<p align="center">
+  <img src="art/logo/colored/framed.svg" width="250" alt="Larasaur Logo">
+</p>
+
+This project uses a comprehensive branding system with various logo types and assets:
+
+- **Logos**: Available in colored, type, and solid versions with both framed and frameless options
+- **Typography**: Uses Google Font "Poppins" throughout the UI for a clean, modern look
+- **Cover Images**: High-quality artwork for documentation and marketing materials
+
+Find all visual assets in the [`art/`](art/) directory, with [detailed documentation](art/readme.md) on usage guidelines.
+
+## 📄 License
+
+This project is open-sourced software licensed under the MIT license.
