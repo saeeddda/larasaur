@@ -3,6 +3,9 @@
 
 # Except for example/template configs
 !example.conf
+!vite-proxy.conf
+!vite-port-proxy.conf
+!vite-universal.conf
 
 # Keep this directory in git
 !.gitkeep 
