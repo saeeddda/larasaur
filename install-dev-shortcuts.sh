@@ -8,6 +8,7 @@ RC_FILE="$HOME/.bashrc"
 # Default project root
 DEFAULT_PROJECT_ROOT="$HOME/projects"
 PROJECT_ROOT="${PROJECT_ROOT:-$DEFAULT_PROJECT_ROOT}"
+DEV_ENV_DIR="$PROJECT_ROOT/dev-env"
 
 mkdir -p "$BIN_DIR"
 
@@ -89,17 +90,20 @@ EOF
 # --------------------------------------
 cat <<EOF > "$BIN_DIR/up"
 #!/bin/bash
-cd "$PROJECT_ROOT" && docker compose up -d
+# Always change to the dev-env directory no matter where we are
+cd "$DEV_ENV_DIR" && docker compose up -d
 EOF
 
 cat <<EOF > "$BIN_DIR/down"
 #!/bin/bash
-cd "$PROJECT_ROOT" && docker compose down
+# Always change to the dev-env directory no matter where we are
+cd "$DEV_ENV_DIR" && docker compose down
 EOF
 
 cat <<EOF > "$BIN_DIR/restart"
 #!/bin/bash
-cd "$PROJECT_ROOT" && docker compose down && docker compose up -d
+# Always change to the dev-env directory no matter where we are
+cd "$DEV_ENV_DIR" && docker compose down && docker compose up -d
 EOF
 
 # --------------------------------------
@@ -125,7 +129,7 @@ echo "   c install                  # composer install"
 echo "   n run dev                  # npm run dev"
 echo "   a migrate                  # artisan migrate"
 echo "   addsite mysite             # generate config for mysite.local"
-echo "   up / down / restart        # manage docker (runs from \$PROJECT_ROOT)"
+echo "   up / down / restart        # manage docker (runs from anywhere)"
 echo ""
 echo "ℹ️ You can override the default path like:"
 echo "   export PROJECT_ROOT=~/my/laravel-env"
