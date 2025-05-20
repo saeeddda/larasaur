@@ -44,42 +44,44 @@ EOF
 # --------------------------------------
 # Addsite (addsite)
 # --------------------------------------
-cat <<'EOF' > "$BIN_DIR/addsite"
+cat <<EOF > "$BIN_DIR/addsite"
 #!/bin/bash
 
-PROJECT_ROOT="${PROJECT_ROOT:-$HOME/projects/dev-env}"
-CURRENT_PATH=$(pwd | grep -o "$PROJECT_ROOT.*")
+PROJECT_ROOT="${PROJECT_ROOT:-$HOME/projects}"
+PROJECT_PATH="\${PROJECT_PATH:-\$PROJECT_ROOT}"
+CURRENT_PATH=\$(pwd)
 
-if [[ -z "$CURRENT_PATH" ]]; then
-    echo "❌ You must be inside a project within $PROJECT_ROOT"
+if [[ ! "\$CURRENT_PATH" =~ ^"\$PROJECT_PATH" ]]; then
+    echo "❌ You must be inside a project within \$PROJECT_PATH"
     exit 1
 fi
 
-REL_PATH=${CURRENT_PATH#$PROJECT_ROOT/}
-DOMAIN=${1:-$(basename "$CURRENT_PATH")}
+# Extract the relative path from PROJECT_PATH
+REL_PATH=\${CURRENT_PATH#"\$PROJECT_PATH/"}
+DOMAIN=\${1:-\$(basename "\$CURRENT_PATH")}
 
-NGINX_TEMPLATE="$PROJECT_ROOT/nginx/templates/project.conf.tpl"
-NGINX_SITES="$PROJECT_ROOT/nginx/sites"
-NGINX_OUTPUT="$NGINX_SITES/$DOMAIN.local.conf"
+NGINX_TEMPLATE="\$PROJECT_ROOT/dev-env/nginx/templates/project.conf.tpl"
+NGINX_SITES="\$PROJECT_ROOT/dev-env/nginx/sites"
+NGINX_OUTPUT="\$NGINX_SITES/\$DOMAIN.local.conf"
 
-if [ ! -f "$CURRENT_PATH/public/index.php" ]; then
-    echo "❌ $CURRENT_PATH/public/index.php not found"
+if [ ! -f "\$CURRENT_PATH/public/index.php" ]; then
+    echo "❌ \$CURRENT_PATH/public/index.php not found"
     exit 1
 fi
 
-mkdir -p "$NGINX_SITES"
+mkdir -p "\$NGINX_SITES"
 
-sed \
-  -e "s|{{DOMAIN}}|$DOMAIN.local|g" \
-  -e "s|{{PROJECT_RELATIVE}}|$REL_PATH|g" \
-  "$NGINX_TEMPLATE" > "$NGINX_OUTPUT"
+sed \\
+  -e "s|{{DOMAIN}}|\$DOMAIN.local|g" \\
+  -e "s|{{PROJECT_RELATIVE}}|\$REL_PATH|g" \\
+  "\$NGINX_TEMPLATE" > "\$NGINX_OUTPUT"
 
-echo "✅ Created Nginx config for $DOMAIN.local"
-echo "📄 $NGINX_OUTPUT"
+echo "✅ Created Nginx config for \$DOMAIN.local"
+echo "📄 \$NGINX_OUTPUT"
 
-if ! grep -q "127.0.0.1 $DOMAIN.local" /etc/hosts; then
-    echo "127.0.0.1 $DOMAIN.local" | sudo tee -a /etc/hosts > /dev/null
-    echo "✅ Added $DOMAIN.local to /etc/hosts"
+if ! grep -q "127.0.0.1 \$DOMAIN.local" /etc/hosts; then
+    echo "127.0.0.1 \$DOMAIN.local" | sudo tee -a /etc/hosts > /dev/null
+    echo "✅ Added \$DOMAIN.local to /etc/hosts"
 fi
 
 echo "🔁 Restart nginx container: docker restart nginx"
