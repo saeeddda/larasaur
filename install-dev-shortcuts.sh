@@ -1,26 +1,28 @@
 #!/bin/bash
 
 # Set install target
-BIN_DIR="$HOME/.local/bin"
-RC_FILE="$HOME/.bashrc"
-[[ -n "$ZSH_VERSION" ]] && RC_FILE="$HOME/.zshrc"
+BIN_DIR="$HOME/.local/bin/larasaur"
+# Detect current shell and set RC_FILE accordingly
+case "$SHELL" in
+    */zsh) RC_FILE="$HOME/.zshrc" ;;
+    */bash) RC_FILE="$HOME/.bashrc" ;;
+    *) RC_FILE="$HOME/.profile" ;;
+esac
 
 # Default project root
-DEFAULT_PROJECT_ROOT="$HOME/projects"
-PROJECT_ROOT="${PROJECT_ROOT:-$DEFAULT_PROJECT_ROOT}"
-DEV_ENV_DIR="$PROJECT_ROOT/dev-env"
+LARASAUR_DIR="$(pwd)"
 
 mkdir -p "$BIN_DIR"
 
-echo "📦 Installing dev shortcuts using project root: $PROJECT_ROOT"
+echo "📦 Installing dev shortcuts"
 
 # --------------------------------------
 # Composer shortcut (c)
 # --------------------------------------
 cat <<EOF > "$BIN_DIR/c"
 #!/bin/bash
-project_path=\$(realpath --relative-to="$PROJECT_ROOT" "\$(pwd | grep -o "$PROJECT_ROOT.*")")
-docker exec -w /var/www/html/\$project_path php-fpm composer "\$@"
+
+docker exec -w /var/www/html/\$(basename \$(pwd)) php-fpm composer "\$@"
 EOF
 
 # --------------------------------------
@@ -28,8 +30,8 @@ EOF
 # --------------------------------------
 cat <<EOF > "$BIN_DIR/n"
 #!/bin/bash
-project_path=\$(realpath --relative-to="$PROJECT_ROOT" "\$(pwd | grep -o "$PROJECT_ROOT.*")")
-docker exec -w /projects/\$project_path node npm "\$@"
+
+docker exec -w /projects/\$(basename \$(pwd)) node npm "\$@"
 EOF
 
 # --------------------------------------
@@ -37,8 +39,8 @@ EOF
 # --------------------------------------
 cat <<EOF > "$BIN_DIR/a"
 #!/bin/bash
-project_path=\$(realpath --relative-to="$PROJECT_ROOT" "\$(pwd | grep -o "$PROJECT_ROOT.*")")
-docker exec -w /var/www/html/\$project_path php-fpm php artisan "\$@"
+
+docker exec -w /var/www/html/\$(basename \$(pwd)) php-fpm php artisan "\$@"
 EOF
 
 # --------------------------------------
@@ -47,22 +49,16 @@ EOF
 cat <<EOF > "$BIN_DIR/addsite"
 #!/bin/bash
 
-PROJECT_ROOT="${PROJECT_ROOT:-$HOME/projects}"
-PROJECT_PATH="\${PROJECT_PATH:-\$PROJECT_ROOT}"
 CURRENT_PATH=\$(pwd)
+FINAL_PATH=\$(realpath --relative-to="$(dirname "$LARASAUR_DIR")" "\$CURRENT_PATH")
 
-if [[ ! "\$CURRENT_PATH" =~ ^"\$PROJECT_PATH" ]]; then
-    echo "❌ You must be inside a project within \$PROJECT_PATH"
-    exit 1
-fi
+CURRENT_FOLDER=\$(basename "\$CURRENT_PATH")
+DOMAIN_NAME=\${1:-\$CURRENT_FOLDER}
+DOMAIN=\$DOMAIN_NAME.local
 
-# Extract the relative path from PROJECT_PATH
-REL_PATH=\${CURRENT_PATH#"\$PROJECT_PATH/"}
-DOMAIN=\${1:-\$(basename "\$CURRENT_PATH")}
-
-NGINX_TEMPLATE="\$PROJECT_ROOT/dev-env/nginx/templates/project.conf.tpl"
-NGINX_SITES="\$PROJECT_ROOT/dev-env/nginx/sites"
-NGINX_OUTPUT="\$NGINX_SITES/\$DOMAIN.local.conf"
+NGINX_TEMPLATE="$LARASAUR_DIR/nginx/templates/project.conf.tpl"
+NGINX_SITES="$LARASAUR_DIR/nginx/sites"
+NGINX_OUTPUT="\$NGINX_SITES/\$DOMAIN.conf"
 
 if [ ! -f "\$CURRENT_PATH/public/index.php" ]; then
     echo "❌ \$CURRENT_PATH/public/index.php not found"
@@ -72,19 +68,20 @@ fi
 mkdir -p "\$NGINX_SITES"
 
 sed \\
-  -e "s|{{DOMAIN}}|\$DOMAIN.local|g" \\
-  -e "s|{{PROJECT_RELATIVE}}|\$REL_PATH|g" \\
+  -e "s|{{DOMAIN}}|\$DOMAIN|g" \\
+  -e "s|{{PROJECT_RELATIVE}}|\$FINAL_PATH|g" \\
   "\$NGINX_TEMPLATE" > "\$NGINX_OUTPUT"
 
-echo "✅ Created Nginx config for \$DOMAIN.local"
+echo "✅ Created Nginx config for \$DOMAIN"
 echo "📄 \$NGINX_OUTPUT"
 
-if ! grep -q "127.0.0.1 \$DOMAIN.local" /etc/hosts; then
-    echo "127.0.0.1 \$DOMAIN.local" | sudo tee -a /etc/hosts > /dev/null
-    echo "✅ Added \$DOMAIN.local to /etc/hosts"
+if ! grep -q "127.0.0.1 \$DOMAIN" /etc/hosts; then
+    echo "127.0.0.1 \$DOMAIN" | sudo tee -a /etc/hosts > /dev/null
+    echo "✅ Added \$DOMAIN to /etc/hosts"
 fi
 
-echo "🔁 Restart nginx container: docker restart nginx"
+echo "🔁 Restarting nginx container"
+docker restart nginx
 EOF
 
 # --------------------------------------
@@ -92,20 +89,23 @@ EOF
 # --------------------------------------
 cat <<EOF > "$BIN_DIR/up"
 #!/bin/bash
+
 # Always change to the dev-env directory no matter where we are
-cd "$DEV_ENV_DIR" && docker compose up -d
+cd "$LARASAUR_DIR" && docker compose up -d
 EOF
 
 cat <<EOF > "$BIN_DIR/down"
 #!/bin/bash
+
 # Always change to the dev-env directory no matter where we are
-cd "$DEV_ENV_DIR" && docker compose down
+cd "$LARASAUR_DIR" && docker compose down
 EOF
 
 cat <<EOF > "$BIN_DIR/restart"
 #!/bin/bash
+
 # Always change to the dev-env directory no matter where we are
-cd "$DEV_ENV_DIR" && docker compose down && docker compose up -d
+cd "$LARASAUR_DIR" && docker compose down && docker compose up -d
 EOF
 
 # --------------------------------------
@@ -113,11 +113,10 @@ EOF
 # --------------------------------------
 chmod +x "$BIN_DIR/"{c,n,a,addsite,up,down,restart}
 
-# Add ~/.local/bin to PATH if needed
+# Add ~/.local/bin/larasaur to PATH if needed
 if ! echo "$PATH" | grep -q "$BIN_DIR"; then
-    echo "export PATH=\"$BIN_DIR:\$PATH\"" >> "$RC_FILE"
+    echo -e "\n# added by larasaur\nexport PATH=\"$BIN_DIR:\$PATH\"" | tee -a "$RC_FILE"
     echo "✅ Added $BIN_DIR to PATH in $RC_FILE"
-    source "$RC_FILE"
 fi
 
 # --------------------------------------
@@ -127,14 +126,9 @@ echo ""
 echo "✅ Dev shortcuts installed!"
 echo ""
 echo "🧰 Usage examples:"
-echo "   c install                  # composer install"
-echo "   n run dev                  # npm run dev"
-echo "   a migrate                  # artisan migrate"
-echo "   addsite mysite             # generate config for mysite.local"
-echo "   up / down / restart        # manage docker (runs from anywhere)"
+echo "   c install               # composer install"
+echo "   n run dev               # npm run dev"
+echo "   a migrate               # artisan migrate"
+echo "   addsite                 # generate config for mysite.local"
+echo "   up / down / restart     # manage docker (runs from anywhere)"
 echo ""
-echo "ℹ️ You can override the default path like:"
-echo "   export PROJECT_ROOT=~/my/laravel-env"
-echo "   ./install-devshorts.sh"
-echo ""
-
