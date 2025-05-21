@@ -19,26 +19,31 @@ A flexible, efficient Docker-based development environment that allows you to ru
 ### Installation
 
 1. Clone this repository:
+
    ```bash
-   git clone https://github.com/yourusername/dev-env.git ~/projects/dev-env
-   cd ~/projects/dev-env
+   git clone https://github.com/mohaphez/larasaur.git ~/projects/larasaur
+   cd ~/projects/larasaur
    ```
 
 2. Start the environment:
+
    ```bash
    docker compose up -d
    ```
 
 3. Install the CLI shortcuts:
+   - if you are on mac, make sure to run `brew install coreutils`
+
    ```bash
-   ./install-dev-shortcuts.sh
+   chmod +x install-dev-shortcuts.sh
+   ./install-dev-shortcuts.sh # rerun this when you move 'larasaur' to a different directory
    ```
 
 ### Directory Structure Example
 
 ```
 ~/projects/
-  ├── dev-env/             # This repository
+  ├── larasaur/            # This repository
   ├── x/
   │   ├── a-laravel/       # Laravel project 1
   │   └── b-laravel/       # Laravel project 2
@@ -55,10 +60,15 @@ A flexible, efficient Docker-based development environment that allows you to ru
 ### Adding a New Site
 
 Navigate to your Laravel project and run:
+
+- you can omit the project name & the site will be the same name as the project folder ex.`project name: "b-laravel" > domain name: "b-laravel.local"`
+
 ```bash
 addsite projectname
 ```
+
 This will:
+
 1. Create an Nginx config for `projectname.local`
 2. Add entry to your hosts file
 
@@ -93,9 +103,18 @@ restart                    # Restart all containers
 ## 🔧 Configuration
 
 You can customize the environment by editing:
+
 - `docker-compose.yml` - Service configuration
 - `Dockerfile` - PHP extensions and dependencies
 - `nginx/templates/project.conf.tpl` - Nginx site template
+
+## ⚠️ How to Uninstall
+
+- stop docker `stop`
+- remove larasaur from your shellrc file `~/.bashrc, ~/.zshrc`
+- remove the bin files `rm -rf ~/.local/bin/larasaur`
+- cleanup your hosts file `/etc/hosts`
+- remove larasaur directory `rm -rf path/to/larasaur`
 
 ## 🎨 Branding & Assets
 
