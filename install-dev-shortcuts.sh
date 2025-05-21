@@ -22,7 +22,10 @@ echo "📦 Installing dev shortcuts"
 cat <<EOF > "$BIN_DIR/c"
 #!/bin/bash
 
-docker exec -w /var/www/html/\$(basename \$(pwd)) php-fpm composer "\$@"
+CURRENT_PATH=\$(pwd)
+FINAL_PATH=\$(realpath --relative-to="$(dirname "$LARASAUR_DIR")" "\$CURRENT_PATH")
+
+docker exec -w /var/www/html/\$FINAL_PATH php-fpm composer "\$@"
 EOF
 
 # --------------------------------------
@@ -31,7 +34,10 @@ EOF
 cat <<EOF > "$BIN_DIR/n"
 #!/bin/bash
 
-docker exec -w /projects/\$(basename \$(pwd)) node npm "\$@"
+CURRENT_PATH=\$(pwd)
+FINAL_PATH=\$(realpath --relative-to="$(dirname "$LARASAUR_DIR")" "\$CURRENT_PATH")
+
+docker exec -w /projects/\$FINAL_PATH node npm "\$@"
 EOF
 
 # --------------------------------------
@@ -40,7 +46,10 @@ EOF
 cat <<EOF > "$BIN_DIR/a"
 #!/bin/bash
 
-docker exec -w /var/www/html/\$(basename \$(pwd)) php-fpm php artisan "\$@"
+CURRENT_PATH=\$(pwd)
+FINAL_PATH=\$(realpath --relative-to="$(dirname "$LARASAUR_DIR")" "\$CURRENT_PATH")
+
+docker exec -w /var/www/html/\$FINAL_PATH php-fpm php artisan "\$@"
 EOF
 
 # --------------------------------------
