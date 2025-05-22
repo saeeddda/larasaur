@@ -1,5 +1,6 @@
 server {
-    listen {{PORT}};
+    listen 80;
+    {{EXTRA_PORT}}
     server_name {{DOMAIN}};
 
     root /var/www/html/{{PROJECT_RELATIVE}}/public;

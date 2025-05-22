@@ -99,13 +99,23 @@ fi
 mkdir -p "\$NGINX_SITES"
 
 # Create nginx config with custom port
+if [ "\$PORT" != "80" ]; then
+    EXTRA_PORT="listen \$PORT;"
+else
+    EXTRA_PORT=""
+fi
+
 sed \\
   -e "s|{{DOMAIN}}|\$DOMAIN|g" \\
   -e "s|{{PROJECT_RELATIVE}}|\$FINAL_PATH|g" \\
-  -e "s|{{PORT}}|\$PORT|g" \\
+  -e "s|{{EXTRA_PORT}}|\$EXTRA_PORT|g" \\
   "\$NGINX_TEMPLATE" > "\$NGINX_OUTPUT"
 
-echo "✅ Created Nginx config for \$DOMAIN on port \$PORT"
+if [ "\$PORT" = "80" ]; then
+    echo "✅ Created Nginx config for \$DOMAIN"
+else
+    echo "✅ Created Nginx config for \$DOMAIN (accessible on both port 80 and port \$PORT)"
+fi
 echo "📄 \$NGINX_OUTPUT"
 
 if ! grep -q "127.0.0.1 \$DOMAIN" /etc/hosts; then
