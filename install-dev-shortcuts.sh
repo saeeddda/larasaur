@@ -61,8 +61,30 @@ cat <<EOF > "$BIN_DIR/addsite"
 CURRENT_PATH=\$(pwd)
 FINAL_PATH=\$(realpath --relative-to="$(dirname "$LARASAUR_DIR")" "\$CURRENT_PATH")
 
-CURRENT_FOLDER=\$(basename "\$CURRENT_PATH")
-DOMAIN_NAME=\${1:-\$CURRENT_FOLDER}
+# Parse command line arguments
+DOMAIN_NAME=""
+PORT="80"
+
+while [[ \$# -gt 0 ]]; do
+    case \$1 in
+        --port=*)
+            PORT="\${1#*=}"
+            shift
+            ;;
+        *)
+            if [ -z "\$DOMAIN_NAME" ]; then
+                DOMAIN_NAME="\$1"
+            fi
+            shift
+            ;;
+    esac
+done
+
+# If no domain name provided, use current folder name
+if [ -z "\$DOMAIN_NAME" ]; then
+    DOMAIN_NAME=\$(basename "\$CURRENT_PATH")
+fi
+
 DOMAIN=\$DOMAIN_NAME.local
 
 NGINX_TEMPLATE="$LARASAUR_DIR/nginx/templates/project.conf.tpl"
@@ -76,12 +98,14 @@ fi
 
 mkdir -p "\$NGINX_SITES"
 
+# Create nginx config with custom port
 sed \\
   -e "s|{{DOMAIN}}|\$DOMAIN|g" \\
   -e "s|{{PROJECT_RELATIVE}}|\$FINAL_PATH|g" \\
+  -e "s|{{PORT}}|\$PORT|g" \\
   "\$NGINX_TEMPLATE" > "\$NGINX_OUTPUT"
 
-echo "✅ Created Nginx config for \$DOMAIN"
+echo "✅ Created Nginx config for \$DOMAIN on port \$PORT"
 echo "📄 \$NGINX_OUTPUT"
 
 if ! grep -q "127.0.0.1 \$DOMAIN" /etc/hosts; then
@@ -89,8 +113,29 @@ if ! grep -q "127.0.0.1 \$DOMAIN" /etc/hosts; then
     echo "✅ Added \$DOMAIN to /etc/hosts"
 fi
 
-echo "🔁 Restarting nginx container"
-docker restart nginx
+# Update docker-compose.yml to include the new port
+if [ "\$PORT" != "80" ]; then
+    COMPOSE_FILE="$LARASAUR_DIR/docker-compose.yml"
+    if ! grep -q "\\- \"\$PORT:\$PORT\"" "\$COMPOSE_FILE"; then
+        # Use awk to add the port only to the nginx service
+        awk -v port="\$PORT" -v domain="\$DOMAIN" '
+        /^  nginx:/ { in_nginx=1 }
+        /^  [a-z]/ && !/^  nginx:/ { in_nginx=0 }
+        /ports:/ && in_nginx {
+            print \$0
+            print "      - \"" port ":" port "\"   # Added by addsite for " domain
+            next
+        }
+        { print }
+        ' "\$COMPOSE_FILE" > "\$COMPOSE_FILE.tmp" && mv "\$COMPOSE_FILE.tmp" "\$COMPOSE_FILE"
+        
+        echo "✅ Added port \$PORT to nginx service in docker-compose.yml"
+        echo "🔄 Please run 'restart' to apply the changes"
+    fi
+else
+    echo "🔁 Restarting nginx container"
+    docker restart nginx
+fi
 EOF
 
 # --------------------------------------
@@ -139,5 +184,7 @@ echo "   c install               # composer install"
 echo "   n run dev               # npm run dev"
 echo "   a migrate               # artisan migrate"
 echo "   addsite                 # generate config for mysite.local"
+echo "   addsite mysite         # generate config for mysite.local"
+echo "   addsite --port=8000 mysite  # generate config with custom port"
 echo "   up / down / restart     # manage docker (runs from anywhere)"
 echo ""

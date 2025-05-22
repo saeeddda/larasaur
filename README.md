@@ -61,16 +61,29 @@ A flexible, efficient Docker-based development environment that allows you to ru
 
 Navigate to your Laravel project and run:
 
-- you can omit the project name & the site will be the same name as the project folder ex.`project name: "b-laravel" > domain name: "b-laravel.local"`
-
 ```bash
+# Basic usage - uses current folder name
+addsite
+
+# Specify a custom domain name
 addsite projectname
+
+# Specify a custom port (will add to nginx configuration)
+addsite --port=8000 projectname
+
+# Port can be specified before or after the domain name
+addsite projectname --port=8000
 ```
 
 This will:
-
 1. Create an Nginx config for `projectname.local`
 2. Add entry to your hosts file
+3. If a custom port is specified:
+   - Configure Nginx to listen on that port
+   - Add the port to the nginx service in docker-compose.yml
+   - Prompt you to restart the containers to apply changes
+
+> **Note**: When using a custom port, access your site at `http://projectname.local:8000` (replace 8000 with your specified port)
 
 ### Command Shortcuts
 
