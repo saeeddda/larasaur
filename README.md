@@ -79,11 +79,14 @@ This will:
 1. Create an Nginx config for `projectname.local`
 2. Add entry to your hosts file
 3. If a custom port is specified:
-   - Configure Nginx to listen on that port
-   - Add the port to the nginx service in docker-compose.yml
+   - Configure Nginx to listen on both port 80 and the custom port
+   - Add the custom port to the nginx service in docker-compose.yml
    - Prompt you to restart the containers to apply changes
 
-> **Note**: When using a custom port, access your site at `http://projectname.local:8000` (replace 8000 with your specified port)
+> **Note**: When using a custom port, your site will be accessible at:
+> - `http://projectname.local` (port 80)
+> - `http://projectname.local:8000` (custom port)
+> - `http://localhost:8000` (custom port)
 
 ### Command Shortcuts
 
