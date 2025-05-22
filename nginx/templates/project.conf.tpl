@@ -1,5 +1,5 @@
 server {
-    listen 80;
+    listen {{PORT}};
     server_name {{DOMAIN}};
 
     root /var/www/html/{{PROJECT_RELATIVE}}/public;
