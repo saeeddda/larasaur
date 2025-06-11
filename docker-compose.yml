@@ -8,6 +8,8 @@ services:
     user: "${UID}:${GID}"
     environment:
       TZ: UTC
+    args:
+        PHP_VERSION: ${PHP_VERSION:-8.3}
     restart: unless-stopped
 
   nginx:
