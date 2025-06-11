@@ -1,4 +1,4 @@
-FROM php:8.3-fpm
+FROM php:${PHP_VERSION}-fpm
 
 # Install system dependencies
 RUN apt-get update && apt-get install -y \
