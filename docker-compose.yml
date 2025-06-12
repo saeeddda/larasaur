@@ -2,14 +2,14 @@ services:
   php-fpm:
     build:
       context: .
+      args:
+        PHP_VERSION: ${PHP_VERSION:-8.3}
     container_name: php-fpm
     volumes:
       - ../:/var/www/html:cached
     user: "${UID}:${GID}"
     environment:
       TZ: UTC
-    args:
-        PHP_VERSION: ${PHP_VERSION:-8.3}
     restart: unless-stopped
 
   nginx:
