@@ -59,6 +59,19 @@ services:
       - "${MYSQL_PORT:-3306}:3306"
     restart: unless-stopped
 
+#    phpmyadmin:
+#      image: phpmyadmin/phpmyadmin
+#      container_name: pma
+#      environment:
+#        PMA_HOST: "${PMA_HOST:-mysql}"
+#        PMA_USER: "${MYSQL_USER:-root}"
+#        PMA_PASSWORD: "${MYSQL_ROOT_PASSWORD:-rootpassword}"
+#      depends_on:
+#        - mysql
+#      ports:
+#        - "${PMA_PORT:-81}:80"
+#      restart: unless-stopped
+
   redis:
     image: redis:latest
     container_name: redis
