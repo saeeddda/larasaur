@@ -46,3 +46,6 @@ composer.phar
 /storage/*.key
 /public/build
 /public/dist
+
+# Custom folders
+/sites
