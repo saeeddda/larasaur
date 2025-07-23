@@ -126,7 +126,7 @@ You can customize the environment by editing:
 
 ## ⚠️ How to Uninstall
 
-- stop docker `stop`
+- stop docker `down`
 - remove larasaur from your shellrc file `~/.bashrc, ~/.zshrc`
 - remove the bin files `rm -rf ~/.local/bin/larasaur`
 - cleanup your hosts file `/etc/hosts`
