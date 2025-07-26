@@ -2,6 +2,8 @@
 
 # Set install target
 BIN_DIR="$HOME/.local/bin/larasaur"
+mkdir -p "$BIN_DIR"
+
 # Detect current shell and set RC_FILE accordingly
 case "$SHELL" in
     */zsh) RC_FILE="$HOME/.zshrc" ;;
@@ -9,10 +11,20 @@ case "$SHELL" in
     *) RC_FILE="$HOME/.profile" ;;
 esac
 
+# Check if running on macOS (Darwin) or Linux
+if [[ "$(uname)" == "Darwin" ]]; then
+    REALPATH_CMD="grealpath"
+else
+    REALPATH_CMD="realpath"
+fi
+
+if ! command -v $REALPATH_CMD &> /dev/null; then
+    echo "Error: $REALPATH_CMD is not installed"
+    exit 1
+fi
+
 # Default project root
 LARASAUR_DIR="$(pwd)"
-
-mkdir -p "$BIN_DIR"
 
 echo "📦 Installing dev shortcuts"
 
@@ -23,7 +35,7 @@ cat <<EOF > "$BIN_DIR/c"
 #!/bin/bash
 
 CURRENT_PATH=\$(pwd)
-FINAL_PATH=\$(realpath --relative-to="$(dirname "$LARASAUR_DIR")" "\$CURRENT_PATH")
+FINAL_PATH=\$($REALPATH_CMD --relative-to="$(dirname "$LARASAUR_DIR")" "\$CURRENT_PATH")
 
 docker exec -w /var/www/html/\$FINAL_PATH php-fpm composer "\$@"
 EOF
@@ -35,7 +47,7 @@ cat <<EOF > "$BIN_DIR/n"
 #!/bin/bash
 
 CURRENT_PATH=\$(pwd)
-FINAL_PATH=\$(realpath --relative-to="$(dirname "$LARASAUR_DIR")" "\$CURRENT_PATH")
+FINAL_PATH=\$($REALPATH_CMD --relative-to="$(dirname "$LARASAUR_DIR")" "\$CURRENT_PATH")
 
 docker exec -w /projects/\$FINAL_PATH node npm "\$@"
 EOF
@@ -47,7 +59,7 @@ cat <<EOF > "$BIN_DIR/a"
 #!/bin/bash
 
 CURRENT_PATH=\$(pwd)
-FINAL_PATH=\$(realpath --relative-to="$(dirname "$LARASAUR_DIR")" "\$CURRENT_PATH")
+FINAL_PATH=\$($REALPATH_CMD --relative-to="$(dirname "$LARASAUR_DIR")" "\$CURRENT_PATH")
 
 docker exec -w /var/www/html/\$FINAL_PATH php-fpm php artisan "\$@"
 EOF
@@ -59,7 +71,7 @@ cat <<EOF > "$BIN_DIR/addsite"
 #!/bin/bash
 
 CURRENT_PATH=\$(pwd)
-FINAL_PATH=\$(realpath --relative-to="$(dirname "$LARASAUR_DIR")" "\$CURRENT_PATH")
+FINAL_PATH=\$($REALPATH_CMD --relative-to="$(dirname "$LARASAUR_DIR")" "\$CURRENT_PATH")
 
 # Parse command line arguments
 DOMAIN_NAME=""
@@ -138,7 +150,7 @@ if [ "\$PORT" != "80" ]; then
         }
         { print }
         ' "\$COMPOSE_FILE" > "\$COMPOSE_FILE.tmp" && mv "\$COMPOSE_FILE.tmp" "\$COMPOSE_FILE"
-        
+
         echo "✅ Added port \$PORT to nginx service in docker-compose.yml"
         echo "🔄 Please run 'restart' to apply the changes"
     fi
@@ -190,11 +202,11 @@ echo ""
 echo "✅ Dev shortcuts installed!"
 echo ""
 echo "🧰 Usage examples:"
-echo "   c install               # composer install"
-echo "   n run dev               # npm run dev"
-echo "   a migrate               # artisan migrate"
-echo "   addsite                 # generate config for mysite.local"
-echo "   addsite mysite         # generate config for mysite.local"
-echo "   addsite --port=8000 mysite  # generate config with custom port"
-echo "   up / down / restart     # manage docker (runs from anywhere)"
+echo "   c install                       # composer install"
+echo "   n run dev                       # npm run dev"
+echo "   a migrate                       # artisan migrate"
+echo "   addsite                         # generate config for mysite.local"
+echo "   addsite mysite                  # generate config for mysite.local"
+echo "   addsite --port=8000 mysite      # generate config with custom port"
+echo "   up / down / restart             # manage docker (runs from anywhere)"
 echo ""
